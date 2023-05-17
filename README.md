@@ -573,6 +573,85 @@ DB Key 종류 및 의미
   <p>모든 의존성을 생성자를 통해 주입하면, 인스턴스 생성 시 즉시 어떠한 동작을 실행할 수 있습니다. 또한 추가적인 설정은 필요하지 않으며, 뜻하지 않게 의존성과 설정값을 빠뜨리는 일이 발생하지 않고 테스트에도 용이합니다.</p>
 </details>
 
+pring Framework에서는 트랜잭션(Transaction)을 관리하기 위해 다양한 방식을 제공합니다. 이 중 가장 일반적인 방법은 Declarative Transaction Management과 Programmatic Transaction Management입니다.
+
+Declarative Transaction Management은 XML 또는 어노테이션을 사용하여 트랜잭션을 선언적으로 관리하는 방법입니다. 이 방법은 트랜잭션 속성을 정의하는 것만으로 트랜잭션 관리가 가능하며, 주요 컴포넌트는 PlatformTransactionManager와 TransactionInterceptor입니다. PlatformTransactionManager는 트랜잭션 관리자의 역할을 하고, TransactionInterceptor는 트랜잭션을 시작, 커밋 또는 롤백하는데 사용됩니다. 컨트롤러, 서비스, DAO 등의 빈에 트랜잭션 속성을 정의하여 트랜잭션을 관리할 수 있습니다.
+
+Programmatic Transaction Management은 코드 내에서 트랜잭션을 직접 관리하는 방법입니다. 이 방법은 Declarative Transaction Management보다 유연성이 높지만, 트랜잭션을 시작하고, 커밋 또는 롤백하는 등의 작업을 코드 내에서 수행해야 하므로 더 복잡합니다. 주요 컴포넌트는 PlatformTransactionManager와 TransactionTemplate입니다. PlatformTransactionManager는 트랜잭션 관리자의 역할을 하고, TransactionTemplate는 트랜잭션을 시작, 커밋 또는 롤백하는데 사용됩니다.
+
+Spring Framework에서는 JDBC, JPA, Hibernate, MyBatis 등 다양한 데이터 액세스 기술에서 트랜잭션 관리를 지원합니다. 이를 위해 각각의 기술에 맞게 PlatformTransactionManager를 구현한 클래스가 제공됩니다. 또한, 트랜잭션 관리 방식은 XML 또는 어노테이션을 사용하여 설정할 수 있습니다.
+
+Spring Framework의 트랜잭션 관리 기능을 이용하면 데이터 액세스 작업을 안전하게 수행할 수 있으며, 일관성 있는 데이터 상태를 유지할 수 있습니다.
+-----------------------------
+@Transaction은 Spring Framework에서 제공하는 어노테이션 중 하나로, 트랜잭션 관리를 위해 사용됩니다.
+
+@Transaction 어노테이션을 메서드나 클래스 레벨에 선언하면, 해당 메서드 또는 클래스에서 수행되는 모든 데이터베이스 연산은 트랜잭션으로 묶여서 수행됩니다. 이를 통해 데이터베이스 연산 중 발생할 수 있는 예외 상황에 대한 롤백 처리를 자동으로 수행할 수 있습니다.
+
+@Transaction 어노테이션은 여러가지 속성값을 가지고 있으며, 주요 속성값으로는 propagation, isolation, readOnly, timeout 등이 있습니다. 각 속성값은 트랜잭션 처리 시 특정한 상황에서 원하는 행동을 지정할 수 있도록 해줍니다.
+
+예를 들어, propagation 속성값은 메서드가 이미 다른 트랜잭션 내에서 실행 중인 경우 어떻게 처리할지를 결정할 수 있습니다. isolation 속성값은 동시에 여러 트랜잭션이 실행될 때, 각 트랜잭션의 격리 레벨을 지정해주는 역할을 합니다. readOnly 속성값은 해당 트랜잭션이 읽기 전용인지를 지정할 수 있습니다. timeout 속성값은 트랜잭션 실행 시간이 너무 오래 걸리는 경우, 트랜잭션을 강제로 롤백시킬 시간을 지정할 수 있습니다.
+
+@Transaction 어노테이션을 사용하려면, 먼저 Spring에서 제공하는 PlatformTransactionManager 구현체를 등록해야 합니다. 이후 @EnableTransactionManagement 어노테이션을 사용하여 트랜잭션 관리 기능을 활성화할 수 있습니다. 그리고 @Transaction 어노테이션을 사용하여 트랜잭션 처리를 수행할 수 있습니다.
+김광용 — 2023.04.18. 오후 3:14
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.web.servlet.MockMvc;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+
+@RunWith(SpringRunner.class)
+@WebMvcTest(controllers = HomeController.class)
+public class HomeControllerTest {
+
+    @Autowired
+    private MockMvc mvc;
+
+    @Test
+    public void home_return() throws Exception {
+        //when
+        String home = "home";
+
+        //then
+        mvc.perform(get("/home"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(home));
+    }
+}
+6.    백엔드 API를 개발하셨다고 하셨는데, 웹에서 호출하는 거였나요?
+A.    웹이 API를 호출할 때까지의 flow를 설명해주세요
+B.    (사용자가 url을 통해 요청이 들어올때에 설명중에) 네트워크 프로토콜은 어떤걸 사용했나요?
+7.    스프링 프레임워크의 DI에 대해 설명해주세요
+8.    스프링에서 Bean이 만들어지면 객체가 한 개일까요 두 개 이상이 될 수 있을까요?
+A.    (Singletone으로 생성된다고 함) 싱글톤의 특징은 뭐에요?
+B.    싱글톤을 왜 사용하신거에요?
+9.    커넥티드카 서비스에 대해 아는 내용을 말해주세요
+10.    마지막으로 하고싶은 말씀있나요?
+Spring Framework란 무엇이며, 어떤 장점이 있나요?
+Spring에서 제공하는 AOP(Aspect Oriented Programming)이란 무엇인가요?
+Spring에서 DI(Dependency Injection)란 무엇이며, 어떤 장점이 있나요?
+Spring에서 제공하는 IoC(Inversion of Control)란 무엇인가요?
+Spring MVC(Model-View-Controller)의 구조와 동작 방식에 대해 설명해주세요.
+Spring Boot란 무엇이며, 어떤 장점이 있나요?
+Spring과 Hibernate의 차이점은 무엇인가요?
+Spring Security란 무엇이며, 어떤 기능을 제공하나요?
+Spring에서 제공하는 ORM(Object-Relational Mapping)이란 무엇인가요?
+Spring에서의 트랜잭션(Transaction) 처리 방식과 설정 방법에 대해 설명해주세요.
+Spring에서 사용되는 어노테이션(Annotation)의 종류와 역할에 대해 설명해주세요.
+Spring에서 제공하는 컨테이너(Container)와 그 종류에 대해 설명해주세요.
+Spring에서 제공하는 캐시(Cache) 처리 방식과 설정 방법에 대해 설명해주세요.
+Spring에서 제공하는 메시징(Messaging) 처리 방식과 기능에 대해 설명해주세요.
+Spring에서 제공하는 스케줄링(Scheduling) 처리 방식과 설정 방법에 대해 설명해주세요.
+Spring에서 제공하는 RESTful 웹 서비스 처리 방식과 기능에 대해 설명해주세요.
+Spring과 관련된 개발 패턴(Pattern)과 그 특징에 대해 설명해주세요.
+Spring에서 제공하는 테스트(Test) 기능과 그 종류에 대해 설명해주세요.
+Spring에서 제공하는 로깅(Logging) 처리 방식과 설정 방법에 대해 설명해주세요.
+Spring에서 제공하는 프로파일(Profile) 처리 방식과 설정 방법에 대해 설명해
+
+
+
 ### JPA
 
 <details>
@@ -617,3 +696,6 @@ DB Key 종류 및 의미
   <p>해결 방법으로는 Fetch Join이라고 불리는 JPQL의 join fetch를 사용하는 방법이 있으며, 또 다른 방법으로는 <code>@EntityGraph</code>를 사용하는 방법, <code>@Fetch(FetchMode.SUBSELECT)</code>를 사용하는 방법, <code>@BatchSize</code>를 사용해 조절하거나 전역적인 batch-size를 설정하는 방법이 있습니다.</p>
   <p>각 해결방안에 대한 유의점은 작성하지 않습니다.</p>
 </details>
+
+
+
